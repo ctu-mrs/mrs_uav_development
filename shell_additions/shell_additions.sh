@@ -341,90 +341,6 @@ alias flog="~/.scripts/git-forest.sh --all --date=relative --abbrev-commit --pre
 alias glog="git log --graph --abbrev-commit --date=relative --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
 
 ## --------------------------------------------------------------
-## |                       SSH key swapper                      |
-## --------------------------------------------------------------
-
-# #{ sshkey()
-
-sshkey() {
-
-  # this script swaps the ssh key lines in .ssh/config for a given user name
-  # and starts an ssh agent for that key
-
-  if [ "$#" -eq "0" ]; then
-    echo please supply a parameter: the ssh key file prefix
-    return
-  fi
-
-  SSH_KEY_NAME="$1"
-
-  HOSTS=(
-    'github.com'
-    'mrs.felk.cvut.cz'
-    'gitlab.fel.cvut.cz'
-  )
-
-  # get me vim, we will be using it alot to postprocess the generated json files
-  if [ -x "$(whereis nvim | awk '{print $2}')" ]; then
-    VIM_BIN="$(whereis nvim | awk '{print $2}')"
-    HEADLESS="--headless"
-  elif [ -x "$(whereis vim | awk '{print $2}')" ]; then
-    VIM_BIN="$(whereis vim | awk '{print $2}')"
-    HEADLESS=""
-  fi
-
-  case "$SHELL" in
-    *bash*)
-      fucking_shell_offset="0"
-      ;;
-    *zsh*)
-      fucking_shell_offset="1"
-      ;;
-  esac
-
-  for ((i=$fucking_shell_offset; i < ${#HOSTS[*]}+$fucking_shell_offset; i++));
-  do
-
-    HOST="${HOSTS[$i]}"
-
-    echo "Updating .ssh/config for $HOST with $SSH_KEY_NAME"
-
-    # comment out all keys in for the host
-    $VIM_BIN $HEADLESS -nEs -c "delmarks!" -c "%g/^host $HOST/norm {ma}mb" -c "'a,'b g/^\s\+identityfile/norm I# " -c "delmarks!" -c "wqa" -- $HOME/.ssh/config
-
-    # remove my own key
-    $VIM_BIN $HEADLESS -nEs -c "delmarks!" -c "%g/^host $HOST/norm {ma}mb" -c "'a,'b g/^\s\+#\s\+identityfile.\+$SSH_KEY_NAME\s*/norm dd" -c "delmarks!" -c "wqa" -- $HOME/.ssh/config
-
-    # add my own key
-    $VIM_BIN $HEADLESS -nEs -c "delmarks!" -c "%g/^host $HOST/norm }kyypccidentityfile ~/.ssh/$SSH_KEY_NAME" -c "wqa" -- $HOME/.ssh/config # `
-
-  done
-
-  # copy the key from uav_core
-  cp ~/git/uav_core/dotssh/$SSH_KEY_NAME ~/.ssh/
-  cp ~/git/uav_core/dotssh/$SSH_KEY_NAME.pub ~/.ssh/
-
-  # set the corret chmod to the keys
-  chmod 0600 ~/.ssh/$SSH_KEY_NAME
-
-  # set git user name
-  local git_user_name=$(grep -hr "$SSH_KEY_NAME" $REPO_PATH/dotssh/git_usernames | cut -d ' ' -f2-)
-
-  if [ -z "$git_user_name" ]; then
-    git_user_name=$SSH_KEY_NAME
-  fi
-
-  git config --global --replace-all user.name "$git_user_name"
-
-  echo "git user.name set to $(git config --global user.name)"
-
-  eval `ssh-agent`
-  ssh-add ~/.ssh/$SSH_KEY_NAME
-}
-
-# #}
-
-## --------------------------------------------------------------
 ## |                         ROS aliases                        |
 ## --------------------------------------------------------------
 
@@ -440,9 +356,9 @@ catkin() {
       ROOT_DIR=`git rev-parse --show-toplevel` 2> /dev/null
 
       command catkin "$@"
-      command catkin config --profile debug --cmake-args -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS='-std=c++17 -Og' -DCMAKE_C_FLAGS='-Og'
-      command catkin config --profile release --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS='-std=c++17'
-      command catkin config --profile reldeb --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS='-std=c++17'
+      command catkin config --profile debug --cmake-args -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_FLAGS='-Og' -DCMAKE_C_FLAGS='-Og'
+      command catkin config --profile release --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      command catkin config --profile reldeb --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
       command catkin profile set reldeb
       ;;
@@ -451,24 +367,11 @@ catkin() {
 
       hostname=$( cat /etc/hostname )
 
-      # we do not need this anymore,
-      # UAVs should have SWAP set up so they can build
-      # if [[ $hostname == uav* ]]; then
-      #   memlimit="--mem-limit 50%"
-      # else
-      #   memlimit=""
-      # fi
-
       PACKAGES=$(catkin list)
       if [ -z "$PACKAGES" ]; then
         echo "Cannot compile, probably not in a workspace, or, your workspace lacks ROS packages. To initialize it, place your packages into 'src/' and call 'catkin init' or 'catkin build' again in the root of the workspace."
       else
-        if [ -z "$memlimit" ]; then
-          command catkin "$@"
-        else
-          echo "Detected UAV PC, compiling with $memlimit"
-          command catkin "$@" $memlimit
-        fi
+        command catkin "$@"
       fi
 
       ;;
@@ -611,8 +514,8 @@ cb() {
 
 # #}
 
-# catkin built [this/package] | less
 # #{ cbl()
+# catkin built [this/package] | less
 
 cbl () {
 
@@ -629,6 +532,15 @@ cbl () {
   fi
 
   command catkin build "$package" --force-color 2>&1 | less -r
+}
+
+# #}
+
+# #{ cbt()
+
+cbt() {
+
+  command catkin build --this
 }
 
 # #}

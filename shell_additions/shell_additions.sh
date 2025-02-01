@@ -270,6 +270,10 @@ presource_ros() {
     return 1
   fi
 
+  if [ ! -e ${ROS_WORKSPACE}/install ]; then
+    echo "[presource_ros()]: \$ROS_WORKSPACE/install does not exist."
+  fi
+
   # export sourced shell files rather than sourcing them directly
   export COLCON_TRACE=1
   export AMENT_TRACE_SETUP_FILES=1
@@ -278,8 +282,9 @@ presource_ros() {
     rm $ROS_PRESOURCE_PATH
   fi
 
-  source /opt/ros/jazzy/setup.zsh >> $ROS_PRESOURCE_PATH
-  source $ROS_WORKSPACE/install/setup.zsh >> $ROS_PRESOURCE_PATH
+  source /opt/ros/jazzy/setup.zsh >> $ROS_PRESOURCE_PATH 2>&1
+  [ -e $ROS_WORKSPACE/install/setup.zsh ] && source $ROS_WORKSPACE/install/setup.zsh >> $ROS_PRESOURCE_PATH 2>&1
+  echo "# $ROS_WORKSPACE" >> $ROS_PRESOURCE_PATH
 
   source $ROS_PRESOURCE_PATH
 
@@ -287,8 +292,17 @@ presource_ros() {
 }
 
 if [ -e ${ROS_PRESOURCE_PATH} ]; then
-  if [ ! -z $TMUX ]; then
-    source $ROS_PRESOURCE_PATH
+
+  # check if the workspace changed
+  SAME_WS=$(cat $ROS_PRESOURCE_PATH | tail -n 1 | grep -e "# $ROS_WORKSPACE$" | wc -l)
+
+  if [ $SAME_WS != "1" ]; then
+    echo "[presource_ros()]: colcon workspace changed"
+    presource_ros
+  else
+    if [ ! -z $TMUX ]; then
+      source $ROS_PRESOURCE_PATH
+    fi
   fi
 else
   presource_ros

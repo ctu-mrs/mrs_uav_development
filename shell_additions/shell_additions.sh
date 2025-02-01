@@ -67,12 +67,12 @@ function _spawn_uav_zsh_complete()
 # #}
 
 # selection of specific function for different shells
-case "$PNAME" in
+case "$pname" in
   bash)
-    complete -F "_spawn_uav_bash_complete" "spawn_uav"
+    complete -f "_spawn_uav_bash_complete" "spawn_uav"
     ;;
   zsh)
-    compctl -K "_spawn_uav_zsh_complete" "spawn_uav"
+    compctl -k "_spawn_uav_zsh_complete" "spawn_uav"
     ;;
 esac
 
@@ -259,6 +259,43 @@ alias glog="git log --graph --abbrev-commit --date=relative --pretty=format:'%Cr
 ## |                         ROS aliases                        |
 ## --------------------------------------------------------------
 
+# #{ presource_ros()
+
+export ROS_PRESOURCE_PATH=/tmp/ros_presource_output.sh
+
+presource_ros() {
+
+  if [ -z $ROS_WORKSPACE ]; then
+    echo "[presource_ros()]: \$ROS_WORKSPACE is not exported. Fill it with the path to your colcon workspace."
+    return 1
+  fi
+
+  # export sourced shell files rather than sourcing them directly
+  export COLCON_TRACE=1
+  export AMENT_TRACE_SETUP_FILES=1
+
+  if [ -e $ROS_PRESOURCE_PATH ]; then
+    rm $ROS_PRESOURCE_PATH
+  fi
+
+  source /opt/ros/jazzy/setup.zsh >> $ROS_PRESOURCE_PATH
+  source $ROS_WORKSPACE/install/setup.zsh >> $ROS_PRESOURCE_PATH
+
+  source $ROS_PRESOURCE_PATH
+
+  echo "[presource_ros()]: colcon workspace '$ROS_WORKSPACE' was presourced"
+}
+
+if [ -e ${ROS_PRESOURCE_PATH} ]; then
+  if [ ! -z $TMUX ]; then
+    source $ROS_PRESOURCE_PATH
+  fi
+else
+  presource_ros
+fi
+
+# #}
+
 # #{ colcon()
 
 colcon() {
@@ -360,6 +397,43 @@ cb()  {
 
   colcon build "$@"
 }
+
+# #}
+
+# #{ roscd()
+
+roscd() {
+
+  if [ -z $ROS_WORKSPACE ]; then
+    echo "[roscd]: \$ROS_WORKSPACE is not exported. Fill it with the path to your colcon workspace."
+    return 1
+  fi
+
+  packages=$(colcon list --base-paths $ROS_WORKSPACE 2>/dev/null)
+
+  package_path=$(echo $packages | grep -E "^$1\s" | awk '{print $2}')
+
+  if [ ! -z $package_path ]; then
+    cd $package_path
+  else
+    cd $ROS_WORKSPACE/src
+  fi
+}
+
+_roscd_complete() {
+
+  local current_word
+  current_word="${COMP_WORDS[COMP_CWORD]}"
+
+  # Get the list of package names using colcon list
+  local packages
+  packages=$(colcon list --base-paths ${ROS_WORKSPACE} 2>/dev/null)
+
+  # reply=(${=packages})
+  COMPREPLY=($(compgen -W "$packages" -- "$current_word"))
+}
+
+complete -F _roscd_complete roscd
 
 # #}
 

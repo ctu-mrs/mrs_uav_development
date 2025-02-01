@@ -284,6 +284,14 @@ presource_ros() {
 
   source /opt/ros/jazzy/setup.zsh >> $ROS_PRESOURCE_PATH 2>&1
   [ -e $ROS_WORKSPACE/install/setup.zsh ] && source $ROS_WORKSPACE/install/setup.zsh >> $ROS_PRESOURCE_PATH 2>&1
+
+  # remove duplicit linees
+  awk '!seen[$0]++' $ROS_PRESOURCE_PATH > ${ROS_PRESOURCE_PATH}_short
+  # remove comments
+  [ -e /usr/bin/nvim ] && /usr/bin/nvim --headless -E -s -c "%g/^# /norm dd" -c "wqa" -- ${ROS_PRESOURCE_PATH}_short
+  mv ${ROS_PRESOURCE_PATH}_short ${ROS_PRESOURCE_PATH}
+
+  # add our marker so we can recognize from which workspace does this originate
   echo "# $ROS_WORKSPACE" >> $ROS_PRESOURCE_PATH
 
   source $ROS_PRESOURCE_PATH
@@ -418,19 +426,24 @@ cb()  {
 
 roscd() {
 
-  if [ -z $ROS_WORKSPACE ]; then
-    echo "[roscd]: \$ROS_WORKSPACE is not exported. Fill it with the path to your colcon workspace."
+  if [ -z $COLCON_PREFIX_PATH ]; then
+    echo "[roscd]: \$COLCON_PREFIX_PATH is not exported -> your colcon workspace is probably not sourced."
     return 1
   fi
 
-  packages=$(colcon list --base-paths $ROS_WORKSPACE 2>/dev/null)
+  if [ -z $1 ]; then
+    cd $COLCON_PREFIX_PATH/..
+    return 0
+  fi
+
+  packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null)
 
   package_path=$(echo $packages | grep -E "^$1\s" | awk '{print $2}')
 
   if [ ! -z $package_path ]; then
     cd $package_path
   else
-    cd $ROS_WORKSPACE/src
+    cd $COLCON_PREFIX_PATH/../src
   fi
 }
 
@@ -441,7 +454,7 @@ _roscd_complete() {
 
   # Get the list of package names using colcon list
   local packages
-  packages=$(colcon list --base-paths ${ROS_WORKSPACE} 2>/dev/null)
+  packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null)
 
   # reply=(${=packages})
   COMPREPLY=($(compgen -W "$packages" -- "$current_word"))

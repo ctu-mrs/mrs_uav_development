@@ -266,12 +266,11 @@ export ROS_PRESOURCE_PATH=/tmp/ros_presource_output.sh
 presource_ros() {
 
   if [ -z $ROS_WORKSPACE ]; then
-    echo "[presource_ros()]: \$ROS_WORKSPACE is not exported. Fill it with the path to your colcon workspace."
-    return 1
+    return 0
   fi
 
   if [ ! -e ${ROS_WORKSPACE}/install ]; then
-    echo "[presource_ros()]: \$ROS_WORKSPACE/install does not exist."
+    echo "[presource_ros()]: \$ROS_WORKSPACE/install does not exist (\$ROS_WORKSPACE = $ROS_WORKSPACE)."
   fi
 
   # export sourced shell files rather than sourcing them directly
@@ -299,7 +298,7 @@ presource_ros() {
   echo "[presource_ros()]: colcon workspace '$ROS_WORKSPACE' was presourced"
 }
 
-if [ -e ${ROS_PRESOURCE_PATH} ]; then
+if [ -e ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
 
   # check if the workspace changed
   SAME_WS=$(cat $ROS_PRESOURCE_PATH | tail -n 1 | grep -e "# $ROS_WORKSPACE$" | wc -l)

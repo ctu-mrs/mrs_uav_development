@@ -431,7 +431,7 @@ roscd() {
   fi
 
   if [ -z $1 ]; then
-    cd $COLCON_PREFIX_PATH/..
+    cd $COLCON_PREFIX_PATH/../src
     return 0
   fi
 

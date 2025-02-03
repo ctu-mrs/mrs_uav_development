@@ -435,15 +435,26 @@ roscd() {
     return 0
   fi
 
+  # first, find the package in the sourced worksapce
   packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null)
-
   package_path=$(echo $packages | grep -E "^$1\s" | awk '{print $2}')
 
   if [ ! -z $package_path ]; then
     cd $package_path
-  else
-    cd $COLCON_PREFIX_PATH/../src
+    return 0
   fi
+
+  # then, try to find the package within the installed packages
+  packages=$(ros2 pkg list)
+  package_path=$(echo $packages | grep -E "^$1\$")
+
+  if [ ! -z $package_path ]; then
+    cd /opt/ros/jazzy/share/$package_path
+    return 0
+  fi
+
+  # finally, just cd into the workspace
+  cd $COLCON_PREFIX_PATH/../src
 }
 
 _roscd_complete() {
@@ -454,6 +465,8 @@ _roscd_complete() {
   # Get the list of package names using colcon list
   local packages
   packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null)
+  packages="$packages
+  $(ros2 pkg list)"
 
   # reply=(${=packages})
   COMPREPLY=($(compgen -W "$packages" -- "$current_word"))

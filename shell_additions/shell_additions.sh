@@ -256,8 +256,10 @@ alias flog="~/.scripts/git-forest.sh --all --date=relative --abbrev-commit --pre
 alias glog="git log --graph --abbrev-commit --date=relative --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset'"
 
 ## --------------------------------------------------------------
-## |                         ROS aliases                        |
+## |                             ROS                            |
 ## --------------------------------------------------------------
+
+export RCUTILS_COLORIZED_OUTPUT=1
 
 # #{ presource_ros()
 
@@ -281,8 +283,8 @@ presource_ros() {
     rm $ROS_PRESOURCE_PATH
   fi
 
-  source /opt/ros/jazzy/setup.zsh >> $ROS_PRESOURCE_PATH 2>&1
-  [ -e $ROS_WORKSPACE/install/setup.zsh ] && source $ROS_WORKSPACE/install/setup.zsh >> $ROS_PRESOURCE_PATH 2>&1
+  source /opt/ros/jazzy/setup.$SNAME >> $ROS_PRESOURCE_PATH 2>&1
+  [ -e $ROS_WORKSPACE/install/setup.$SNAME ] && source $ROS_WORKSPACE/install/setup.$SNAME >> $ROS_PRESOURCE_PATH 2>&1
 
   # remove duplicit linees
   awk '!seen[$0]++' $ROS_PRESOURCE_PATH > ${ROS_PRESOURCE_PATH}_short
@@ -311,6 +313,8 @@ if [ -e ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
       source $ROS_PRESOURCE_PATH
     fi
   fi
+elif [ -z $ROS_WORKSPACE ]; then
+  source /opt/ros/jazzy/setup.$SNAME
 else
   presource_ros
 fi
@@ -425,22 +429,26 @@ cb()  {
 
 roscd() {
 
-  if [ -z $COLCON_PREFIX_PATH ]; then
-    echo "[roscd]: \$COLCON_PREFIX_PATH is not exported -> your colcon workspace is probably not sourced."
-    return 1
+  if [ ! -z $COLCON_PREFIX_PATH ]; then
+
+    if [ -z $1 ]; then
+      cd $COLCON_PREFIX_PATH/../src
+      return 0
+    fi
+
+    # first, find the package in the sourced worksapce
+    packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null)
+    package_path=$(echo $packages | grep -E "^$1\s" | awk '{print $2}')
+
+    if [ ! -z $package_path ]; then
+      cd $package_path
+      return 0
+    fi
+
   fi
 
   if [ -z $1 ]; then
-    cd $COLCON_PREFIX_PATH/../src
-    return 0
-  fi
-
-  # first, find the package in the sourced worksapce
-  packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null)
-  package_path=$(echo $packages | grep -E "^$1\s" | awk '{print $2}')
-
-  if [ ! -z $package_path ]; then
-    cd $package_path
+    cd /opt/ros/jazzy/share
     return 0
   fi
 
@@ -464,7 +472,11 @@ _roscd_complete() {
 
   # Get the list of package names using colcon list
   local packages
-  packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null)
+
+  if [ ! -z $COLCON_PREFIX_PATH ]; then
+    packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null | awk '{print $1}')
+  fi
+
   packages="$packages
   $(ros2 pkg list)"
 

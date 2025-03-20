@@ -295,8 +295,6 @@ presource_ros() {
   # add our marker so we can recognize from which workspace does this originate
   echo "# $ROS_WORKSPACE" >> $ROS_PRESOURCE_PATH
 
-  source $ROS_PRESOURCE_PATH
-
   echo "[presource_ros()]: colcon workspace '$ROS_WORKSPACE' was presourced"
 }
 
@@ -317,6 +315,8 @@ elif [ -z $ROS_WORKSPACE ]; then
   source /opt/ros/jazzy/setup.$SNAME
 else
   presource_ros
+
+  source $ROS_PRESOURCE_PATH
 fi
 
 # #}

@@ -568,4 +568,18 @@ cd "$CURRENT_PATH"
 
 # #}
 
+## --------------------------------------------------------------
+## |                           Docker                           |
+## --------------------------------------------------------------
+
+dk() {
+  if [[ -n $(docker ps -a -q) ]]; then
+    docker kill $(docker ps -a -q)
+    docker rm $(docker ps -a -q)
+  fi
+  docker volume prune -f
+  docker network prune -f
+}
+
+
 # #}

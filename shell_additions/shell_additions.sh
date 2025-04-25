@@ -296,6 +296,10 @@ presource_ros() {
   echo "# $ROS_WORKSPACE" >> $ROS_PRESOURCE_PATH
 
   echo "[presource_ros()]: colcon workspace '$ROS_WORKSPACE' was presourced"
+
+  if [ -z $RUN_TMUX ] || ! $RUN_TMUX; then
+    source $ROS_PRESOURCE_PATH
+  fi
 }
 
 if [ -e ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
@@ -337,7 +341,7 @@ colcon() {
     init*)
 
       if [ ! -e "build/COLCON_IGNORE" ]; then # we are NOT at the workspace root
-        command colcon build # this creates a new workspace
+        command colcon build --symlink-install # this creates a new workspace
       fi
 
       ;;

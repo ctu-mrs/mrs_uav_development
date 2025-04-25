@@ -307,16 +307,21 @@ if [ -e ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
     echo "[presource_ros()]: colcon workspace changed"
     presource_ros
   else
-    if [ ! -z $TMUX ]; then
+    if ! $RUN_TMUX || [ ! -z $TMUX ]; then
       source $ROS_PRESOURCE_PATH
     fi
   fi
-elif [ -z $ROS_WORKSPACE ]; then
+
+elif ! $RUN_TMUX || [ -z $ROS_WORKSPACE ]; then
+
   source /opt/ros/jazzy/setup.$SNAME
+
 else
   presource_ros
 
-  source $ROS_PRESOURCE_PATH
+  if ! $RUN_TMUX; then
+    source $ROS_PRESOURCE_PATH
+  fi
 fi
 
 # #}

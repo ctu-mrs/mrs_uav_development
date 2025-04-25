@@ -312,7 +312,7 @@ if [ -e ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
     fi
   fi
 
-elif [ -z $RUN_TMUX ] || ! $RUN_TMUX || [ -z $ROS_WORKSPACE ]; then
+elif [ -z $ROS_WORKSPACE ] && ([ -z $RUN_TMUX ] || ! $RUN_TMUX ); then
 
   source /opt/ros/jazzy/setup.$SNAME
 

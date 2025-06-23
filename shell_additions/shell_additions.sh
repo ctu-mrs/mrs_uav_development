@@ -261,6 +261,9 @@ alias glog="git log --graph --abbrev-commit --date=relative --pretty=format:'%Cr
 
 export RCUTILS_COLORIZED_OUTPUT=1
 
+eval "$(/usr/bin/register-python-argcomplete ros2)"
+eval "$(/usr/bin/register-python-argcomplete colcon)"
+
 # #{ presource_ros()
 
 export ROS_PRESOURCE_PATH=/tmp/ros_presource_output.sh

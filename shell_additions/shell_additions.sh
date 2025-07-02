@@ -261,9 +261,6 @@ alias glog="git log --graph --abbrev-commit --date=relative --pretty=format:'%Cr
 
 export RCUTILS_COLORIZED_OUTPUT=1
 
-eval "$(/usr/bin/register-python-argcomplete ros2)"
-eval "$(/usr/bin/register-python-argcomplete colcon)"
-
 # #{ presource_ros()
 
 export ROS_PRESOURCE_PATH=/tmp/ros_presource_output.sh
@@ -319,7 +316,8 @@ if [ -e ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
     fi
   fi
 
-elif [ -z $ROS_WORKSPACE ] && ([ -z $RUN_TMUX ] || ! $RUN_TMUX ); then
+# elif [ -z $ROS_WORKSPACE ] && ([ -z $RUN_TMUX ] || ! $RUN_TMUX ); then
+elif [ -z $ROS_WORKSPACE ]; then
 
   source /opt/ros/jazzy/setup.$SNAME
 
@@ -580,6 +578,9 @@ cd "$CURRENT_PATH"
 
 # #}
 
+eval "$(/usr/bin/register-python-argcomplete ros2)"
+eval "$(/usr/bin/register-python-argcomplete colcon)"
+
 ## --------------------------------------------------------------
 ## |                           Docker                           |
 ## --------------------------------------------------------------
@@ -592,6 +593,5 @@ dk() {
   docker volume prune -f
   docker network prune -f
 }
-
 
 # #}

@@ -585,13 +585,52 @@ eval "$(/usr/bin/register-python-argcomplete colcon)"
 ## |                           Docker                           |
 ## --------------------------------------------------------------
 
+# #{ dk() 
+
 dk() {
-  if [[ -n $(docker ps -a -q) ]]; then
-    docker kill $(docker ps -a -q)
-    docker rm $(docker ps -a -q)
+  # Get all container IDs first to avoid race conditions.
+  local cids
+  cids=$(docker ps -a -q)
+
+  # Stop and remove all containers if they exist.
+  if [[ -n "$cids" ]]; then
+    echo "Stopping and removing all containers..."
+    # The '-f' flag force-stops and removes running containers in one go.
+    # Errors are shown by default for better debugging.
+    docker rm -f $cids
+    echo "Containers removed."
+  else
+    echo "No containers to remove."
   fi
-  docker volume prune -f
-  docker network prune -f
+
+  # Ask separately to prune volumes.
+  local volume_response
+  # This printf/read pattern is compatible with both Bash and Zsh.
+  printf "Prune unused volumes? (y/N) "
+  read -r volume_response
+  case "$volume_response" in
+    [yY] | [yY][eE][sS])
+      echo "Pruning unused volumes..."
+      docker volume prune -f
+      ;;
+    *)
+      echo "Skipping volume prune."
+      ;;
+  esac
+
+  # Ask separately to prune networks.
+  local network_response
+  printf "Prune unused networks? (y/N) "
+  read -r network_response
+  case "$network_response" in
+    [yY] | [yY][eE][sS])
+      echo "Pruning unused networks..."
+      docker network prune -f
+      ;;
+    *)
+      echo "Skipping network prune."
+      ;;
+  esac
 }
 
 # #}

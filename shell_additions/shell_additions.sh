@@ -19,11 +19,11 @@ export GITMAN_CACHE_DISABLE=1
 
 getRcFile() {
 
-  case "$SHELL" in
-    *bash*)
+  case "$PNAME" in
+    bash)
       RCFILE="$HOME/.bashrc"
       ;;
-    *zsh*)
+    zsh)
       RCFILE="$HOME/.zshrc"
       ;;
   esac
@@ -67,7 +67,7 @@ function _spawn_uav_zsh_complete()
 # #}
 
 # selection of specific function for different shells
-case "$pname" in
+case "$PNAME" in
   bash)
     complete -f "_spawn_uav_bash_complete" "spawn_uav"
     ;;
@@ -286,7 +286,7 @@ presource_ros() {
   source /opt/ros/jazzy/setup.$SNAME >> $ROS_PRESOURCE_PATH 2>&1
   [ -e $ROS_WORKSPACE/install/setup.$SNAME ] && source $ROS_WORKSPACE/install/setup.$SNAME >> $ROS_PRESOURCE_PATH 2>&1
 
-  # remove duplicit linees
+  # remove duplicit lines
   awk '!seen[$0]++' $ROS_PRESOURCE_PATH > ${ROS_PRESOURCE_PATH}_short
   # remove comments
   [ -e /usr/bin/nvim ] && /usr/bin/nvim --headless -E -s -c "%g/^# /norm dd" -c "wqa" -- ${ROS_PRESOURCE_PATH}_short
@@ -447,8 +447,10 @@ roscd() {
     fi
 
     # first, find the package in the sourced worksapce
-    packages=$(colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null)
-    package_path=$(echo $packages | grep -E "^$1\s" | awk '{print $2}')
+    package_path=$(
+      colcon list --base-paths $COLCON_PREFIX_PATH/.. 2>/dev/null | \
+      grep -E "^$1\s" | awk '{print $2}'
+    )
 
     if [ ! -z $package_path ]; then
       cd $package_path
@@ -463,8 +465,10 @@ roscd() {
   fi
 
   # then, try to find the package within the installed packages
-  packages=$(ros2 pkg list)
-  package_path=$(echo $packages | grep -E "^$1\$")
+  package_path=$(
+    ros2 pkg list | \
+    grep -E "^$1\$"
+  )
 
   if [ ! -z $package_path ]; then
     cd /opt/ros/jazzy/share/$package_path
@@ -534,11 +538,11 @@ cd() {
 
     # test original paths for prefix
 
-    case "$SHELL" in
-      *bash*)
+    case "$PNAME" in
+      bash)
         fucking_shell_offset="0"
         ;;
-      *zsh*)
+      zsh)
         fucking_shell_offset="1"
         ;;
     esac
@@ -591,6 +595,10 @@ dk() {
   # Get all container IDs first to avoid race conditions.
   local cids
   cids=$(docker ps -a -q)
+
+  if [[ "$PNAME" == 'zsh' ]]; then
+    cids=(${=cids})
+  fi
 
   # Stop and remove all containers if they exist.
   if [[ -n "$cids" ]]; then

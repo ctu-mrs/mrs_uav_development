@@ -360,6 +360,13 @@ colcon() {
         fi
       done
 
+      if [ -n "$ROS_WORKSPACE" ] && [[ $(pwd) != $(eval echo "$ROS_WORKSPACE") ]]; then
+
+        echo "Cannot compile, you are compiling a different workspace than you are sourcing. This will corrupt your workspace with unwanted dependency."
+        echo "If you actually want to build dependent workspaces, unset the ROS_WORKSPACE variable and source the workspaces directly."
+        return 1
+      fi
+
       # if the flow got here, we found the build/COLCON_IGNORE file!
       # this is the folder we're looking for - call the actual colcon command here
       command colcon "$@" --symlink-install

@@ -123,7 +123,7 @@ gitUpdateSubmodules() {
   echo "Updating git submodules"
   command git submodule update --init --recursive
 
-  if [ -e .gitman.yml ]; then
+  if [ -f .gitman.yml ]; then
     if [[ ! $(git status .gitman.yml --porcelain) ]]; then # if .gitman.yml is unchanged
       echo "Updating gitman sub-repos"
       gitman install
@@ -271,7 +271,7 @@ presource_ros() {
     return 0
   fi
 
-  if [ ! -e ${ROS_WORKSPACE}/install ]; then
+  if [ ! -d ${ROS_WORKSPACE}/install ]; then
     echo "[presource_ros()]: \$ROS_WORKSPACE/install does not exist (\$ROS_WORKSPACE = $ROS_WORKSPACE)."
   fi
 
@@ -279,17 +279,17 @@ presource_ros() {
   export COLCON_TRACE=1
   export AMENT_TRACE_SETUP_FILES=1
 
-  if [ -e $ROS_PRESOURCE_PATH ]; then
+  if [ -f $ROS_PRESOURCE_PATH ]; then
     rm $ROS_PRESOURCE_PATH
   fi
 
   source /opt/ros/jazzy/setup.$SNAME >> $ROS_PRESOURCE_PATH 2>&1
-  [ -e $ROS_WORKSPACE/install/setup.$SNAME ] && source $ROS_WORKSPACE/install/setup.$SNAME >> $ROS_PRESOURCE_PATH 2>&1
+  [ -f $ROS_WORKSPACE/install/setup.$SNAME ] && source $ROS_WORKSPACE/install/setup.$SNAME >> $ROS_PRESOURCE_PATH 2>&1
 
   # remove duplicit lines
   awk '!seen[$0]++' $ROS_PRESOURCE_PATH > ${ROS_PRESOURCE_PATH}_short
   # remove comments
-  [ -e /usr/bin/nvim ] && /usr/bin/nvim --headless -E -s -c "%g/^# /norm dd" -c "wqa" -- ${ROS_PRESOURCE_PATH}_short
+  [ -f /usr/bin/nvim ] && /usr/bin/nvim --headless -E -s -c "%g/^# /norm dd" -c "wqa" -- ${ROS_PRESOURCE_PATH}_short
   mv ${ROS_PRESOURCE_PATH}_short ${ROS_PRESOURCE_PATH}
 
   # add our marker so we can recognize from which workspace does this originate
@@ -302,7 +302,7 @@ presource_ros() {
   fi
 }
 
-if [ -e ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
+if [ -f ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
 
   # check if the workspace changed
   SAME_WS=$(cat $ROS_PRESOURCE_PATH | tail -n 1 | grep -e "# $ROS_WORKSPACE$" | wc -l)
@@ -359,7 +359,7 @@ EOT
     build*)
 
       # go up the folder tree until we find the build/COLCON_IGNORE file or until we reach the root
-      while [ ! -e "build/COLCON_IGNORE" ]; do
+      while [ ! -f "build/COLCON_IGNORE" ]; do
         cd ..
         if [[ `pwd` == "/" ]]; then
           # we reached the root and didn't find the build/COLCON_IGNORE file - that's a fail!
@@ -388,7 +388,7 @@ EOT
     test*)
 
       # go up the folder tree until we find the build/COLCON_IGNORE file or until we reach the root
-      while [ ! -e "build/COLCON_IGNORE" ]; do
+      while [ ! -f "build/COLCON_IGNORE" ]; do
         cd ..
         if [[ `pwd` == "/" ]]; then
           # we reached the root and didn't find the build/COLCON_IGNORE file - that's a fail!
@@ -409,19 +409,19 @@ EOT
 
     clean*)
 
-      if [ -e "build/COLCON_IGNORE" ]; then # we are at the workspace root
+      if [ -f "build/COLCON_IGNORE" ]; then # we are at the workspace root
         rm -r build install log
         mkdir build
         cd build
         touch COLCON_IGNORE
       else
-        while [ ! -e "build/COLCON_IGNORE" ]; do
+        while [ ! -f "build/COLCON_IGNORE" ]; do
           cd ..
 
           if [[ `pwd` == "/" ]]; then
             echo "Cannot clean, not in a workspace!"
             break
-          elif [ -e "build/COLCON_IGNORE" ]; then
+          elif [ -f "build/COLCON_IGNORE" ]; then
             rm -r build install log
             mkdir build
             cd build

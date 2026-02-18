@@ -483,13 +483,10 @@ roscd() {
   fi
 
   # then, try to find the package within the installed packages
-  package_path=$(
-    ros2 pkg list | \
-    grep -E "^$1\$"
-  )
+  package_path=$(ros2 pkg prefix --share $1 2> /dev/null)
 
   if [ ! -z $package_path ]; then
-    cd /opt/ros/jazzy/share/$package_path
+    cd $package_path
     return 0
   fi
 

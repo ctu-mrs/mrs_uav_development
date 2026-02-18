@@ -345,7 +345,7 @@ colcon() {
         command colcon build --symlink-install # this creates a new workspace
       fi
 
-      if [ ! -e "colcon_defaults.yaml" ]; then
+      if [ ! -f "colcon_defaults.yaml" ]; then
         echo -e "\e[1;33m[!] WARNING: 'colcon_defaults.yaml' not found in $(pwd).\e[0m"
         echo -e "\e[33m    The standard system default configuration will be used for the build.\e[0m"
       fi
@@ -372,7 +372,7 @@ colcon() {
         return 1
       fi
 
-      if [ ! -e "colcon_defaults.yaml" ]; then
+      if [ ! -f "colcon_defaults.yaml" ]; then
         echo -e "\e[1;33m[!] WARNING: 'colcon_defaults.yaml' not found in $(pwd).\e[0m"
         echo -e "\e[33m    Proceeding with standard system defaults for this build.\e[0m"
       fi

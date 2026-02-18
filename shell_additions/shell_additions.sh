@@ -341,8 +341,17 @@ colcon() {
 
     init*)
 
-      if [ ! -e "build/COLCON_IGNORE" ]; then # we are NOT at the workspace root
-        command colcon build --symlink-install # this creates a new workspace
+      if [ ! -f "build/COLCON_IGNORE" ]; then
+        mkdir -p build src
+        touch build/COLCON_IGNORE
+
+cat <<EOT > colcon_defaults.yaml
+build:
+  mixin:
+    - rel-with-deb-info
+    - compile-commands
+  allow-overriding: []
+EOT
       fi
 
       ;;

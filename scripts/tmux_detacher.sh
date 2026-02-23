@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TMUX_PATH="$(whereis tmux | awk '{print $2}')"
+TMUX_PATH="$(command -v tmux)"
 
 SESSION_NAME="D$RANDOM"
 

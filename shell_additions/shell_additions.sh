@@ -345,7 +345,7 @@ colcon() {
         mkdir -p build src
         touch build/COLCON_IGNORE
 
-cat <<EOT > colcon_defaults.yaml
+        cat <<EOT > colcon_defaults.yaml
 build:
   mixin:
     - rel-with-deb-info

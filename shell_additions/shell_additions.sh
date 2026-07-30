@@ -349,13 +349,15 @@ colcon() {
         mkdir -p build src
         touch build/COLCON_IGNORE
 
-        cat <<EOT > colcon_defaults.yaml
+        if [ ! -f "colcon_defaults.yaml" ]; then
+          cat <<EOT > colcon_defaults.yaml
 build:
   mixin:
     - rel-with-deb-info
     - compile-commands
   allow-overriding: []
 EOT
+        fi
       fi
 
       ;;

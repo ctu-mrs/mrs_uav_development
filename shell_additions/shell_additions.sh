@@ -302,31 +302,35 @@ presource_ros() {
   fi
 }
 
-if [ -f ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
+if [ -z $NIX_ENV_ROOT ]; then
 
-  # check if the workspace changed
-  SAME_WS=$(cat $ROS_PRESOURCE_PATH | tail -n 1 | grep -e "# $ROS_WORKSPACE$" | wc -l)
+  if [ -f ${ROS_PRESOURCE_PATH} ] && [ ! -z $ROS_WORKSPACE ]; then
 
-  if [ $SAME_WS != "1" ]; then
-    echo "[presource_ros()]: colcon workspace changed"
-    presource_ros
+    # check if the workspace changed
+    SAME_WS=$(cat $ROS_PRESOURCE_PATH | tail -n 1 | grep -e "# $ROS_WORKSPACE$" | wc -l)
+
+    if [ $SAME_WS != "1" ]; then
+      echo "[presource_ros()]: colcon workspace changed"
+      presource_ros
+    else
+      if [ -z $RUN_TMUX ] || ! $RUN_TMUX || [ ! -z $TMUX ]; then
+        source $ROS_PRESOURCE_PATH
+      fi
+    fi
+
+  # elif [ -z $ROS_WORKSPACE ] && ([ -z $RUN_TMUX ] || ! $RUN_TMUX ); then
+  elif [ -z $ROS_WORKSPACE ]; then
+
+    source /opt/ros/jazzy/setup.$SNAME
+
   else
-    if [ -z $RUN_TMUX ] || ! $RUN_TMUX || [ ! -z $TMUX ]; then
+    presource_ros
+
+    if [ -z $RUN_TMUX ] || ! $RUN_TMUX; then
       source $ROS_PRESOURCE_PATH
     fi
   fi
 
-# elif [ -z $ROS_WORKSPACE ] && ([ -z $RUN_TMUX ] || ! $RUN_TMUX ); then
-elif [ -z $ROS_WORKSPACE ]; then
-
-  source /opt/ros/jazzy/setup.$SNAME
-
-else
-  presource_ros
-
-  if [ -z $RUN_TMUX ] || ! $RUN_TMUX; then
-    source $ROS_PRESOURCE_PATH
-  fi
 fi
 
 # #}
